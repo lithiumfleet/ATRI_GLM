@@ -24,7 +24,7 @@ static inline InferenceMode to_inference_mode(const std::string &s) {
 struct Args {
     std::string model_path = "chatglm-ggml.bin";
     InferenceMode mode = INFERENCE_MODE_CHAT;
-    std::string prompt = "你好";
+    std::string prompt = "";
     int max_length = 2048;
     int max_context_length = 512;
     bool interactive = false;
@@ -205,17 +205,19 @@ static void chat(Args &args) {
         args.interactive = false;
     }
 
-    if (args.interactive) {
-        std::cout << R"(    ________          __  ________    __  ___                 )" << '\n'
-                  << R"(   / ____/ /_  ____ _/ /_/ ____/ /   /  |/  /_________  ____  )" << '\n'
-                  << R"(  / /   / __ \/ __ `/ __/ / __/ /   / /|_/ // ___/ __ \/ __ \ )" << '\n'
-                  << R"( / /___/ / / / /_/ / /_/ /_/ / /___/ /  / // /__/ /_/ / /_/ / )" << '\n'
-                  << R"( \____/_/ /_/\__,_/\__/\____/_____/_/  /_(_)___/ .___/ .___/  )" << '\n'
-                  << R"(                                              /_/   /_/       )" << '\n'
+    if (args.interactive)
+ {
+        std::cout << R"(=========================================)" << '\n'
+                  << R"(                             _           )" << '\n'
+                  << R"(   __,  -/- ,_   .     __   //  ,____,   )" << '\n'
+                  << R"(  (_/(__/__/ (__/__ __(_/__(/__/ / / (_  )" << '\n'
+                  << R"(                      _/_                )" << '\n'
+                  << R"(                     (/                  )" << '\n'
+                  << R"(=========================================)" << '\n'
                   << '\n';
 
         std::cout
-            << "Welcome to ChatGLM.cpp! Ask whatever you want. Type 'clear' to clear context. Type 'stop' to exit.\n"
+            << "Powered by ChatGLM.cpp! Press <Ctrl-c> to exit.\n"
             << "\n";
 
         std::vector<std::string> history;
@@ -224,23 +226,23 @@ static void chat(Args &args) {
             history = set_history(args.sys_prompt_fpath);
         }
         while (1) {
-            std::cout << std::setw(model_name.size()) << std::left << "Prompt"
+            std::cout << std::setw(model_name.size()) << std::left
                       << " > " << std::flush;
             std::string prompt;
-            if (!get_utf8_line(prompt) || prompt == "stop") {
+            if (!get_utf8_line(prompt)) {
                 break;
             }
             if (prompt.empty()) {
                 continue;
             }
-            if (prompt == "clear") {
-                history.clear();
-                continue;
-            }
-            history.emplace_back(std::move(prompt));
+            // if (prompt == "clear") {
+            //     history.clear();
+            //     continue;
+            // }
+            history.emplace_back(std::move("[u]"+prompt));
             std::cout << model_name << " > ";
             std::string output = pipeline.chat(history, gen_config, streamer.get());
-            history.emplace_back(std::move(output));
+            history.emplace_back(std::move("[a]"+output));
             if (args.verbose) {
                 std::cout << "\n" << perf_streamer->to_string() << "\n\n";
             }

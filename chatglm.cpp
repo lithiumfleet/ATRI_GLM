@@ -422,9 +422,10 @@ std::string to_string(ModelType model_type) {
     case MODEL_TYPE_CHATGLM:
         return "ChatGLM";
     case MODEL_TYPE_CHATGLM2:
-        return "ChatGLM2";
+        // return "ChatGLM2";
     case MODEL_TYPE_CHATGLM3:
-        return "ChatGLM3";
+        // return "ChatGLM3";
+        return "Atri";  // set model name to arti
     case MODEL_TYPE_BAICHUAN7B:
         return "Baichuan7B";
     case MODEL_TYPE_BAICHUAN13B:
@@ -1042,28 +1043,27 @@ std::string ChatGLM3Tokenizer::decode(const std::vector<int> &ids) const {
 
 std::vector<int> ChatGLM3Tokenizer::encode_history(const std::vector<std::string> &history, int max_length) const {
     // 这里是GLM3的history入口
-    // TODO: need a new api for system / tools / metadata prompt
-    std::vector<int> newline_ids;
-    sp.Encode("\n", &newline_ids);
+    std::vector<int> newline_ids; sp.Encode("\n", &newline_ids); // 编码newline_ids, 后面可以复用
     std::vector<int> input_ids{gmask_token_id, sop_token_id};
 
     // history set
-    bool USE_SYS_PROMPT = !history.empty();
     for (size_t i = 0; i < history.size(); i++) {
-    // TODO: support all roles
-    // add first sentences: system prompt
-    if(USE_SYS_PROMPT) {
-        if(i == 0) input_ids.emplace_back(system_token_id);
-        else input_ids.emplace_back((i % 2 == 1) ? user_token_id : assistant_token_id);
-    } else {
-        input_ids.emplace_back((i % 2 == 0) ? user_token_id : assistant_token_id);
-    }
+        // set role
+        std::string line = history[i];
+        size_t left = line.find_first_of('[');
+        size_t right = line.find_last_of(']');
+        std::string role = line.substr(left+1,right-left-1);
+        std::string message = line.substr(right+1);
+        if(role=="usr"||role=="user"||role=="u") input_ids.emplace_back(user_token_id);
+        else if(role=="llm"||role=="bot"||role=="atri"||role=="a") input_ids.emplace_back(assistant_token_id);
+        else if(role=="mem"||role=="memoery"||role=="m") input_ids.emplace_back(observation_token_id);
+        else if(role=="sys"||role=="system"||role=="s") input_ids.emplace_back(system_token_id);
 
-    // TODO: support metadata
-    input_ids.insert(input_ids.end(), newline_ids.begin(), newline_ids.end());
-    std::vector<int> content_ids;
-        sp.Encode(history[i], &content_ids);
-        input_ids.insert(input_ids.end(), content_ids.begin(), content_ids.end());
+        // TODO: support metadata
+        input_ids.insert(input_ids.end(), newline_ids.begin(), newline_ids.end());
+        std::vector<int> content_ids;
+            sp.Encode(message, &content_ids);
+            input_ids.insert(input_ids.end(), content_ids.begin(), content_ids.end());
     }
     input_ids.emplace_back(assistant_token_id);
     // NOTE: push '\n' into input_ids to avoid model generating it, saving 2 tokens
