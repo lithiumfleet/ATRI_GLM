@@ -24,7 +24,7 @@ static inline InferenceMode to_inference_mode(const std::string &s) {
 struct Args {
     std::string model_path = "chatglm-ggml.bin";
     InferenceMode mode = INFERENCE_MODE_CHAT;
-    std::string prompt = "";
+    std::string prompt = "你好";
     int max_length = 2048;
     int max_context_length = 512;
     bool interactive = false;
@@ -138,19 +138,23 @@ static bool get_utf8_line(std::string &line) {
 #endif
 }
 
-static std::vector<std::string> set_history(std::string fpath) {
-    std::vector<std::string> history;
+static std::vector<std::string> init_work_memery(std::string fpath) {
+    std::vector<std::string> work_memery;
     try {
         std::ifstream fin(fpath, std::ios::in);
         std::string message;
         while(std::getline(fin, message)) {
-            history.emplace_back(message);
+            work_memery.emplace_back(message);
         }// no mannually close
     } catch (std::exception &e) {
         std::cerr << e.what() << std::endl;
         exit(EXIT_FAILURE);
     }
-    return history;
+    return work_memery;
+}
+
+static std::vector<std::string> adjust_work_memery(const std::string& prompt, std::vector<std::string>& work_memery) {
+    return work_memery; //FIXME!
 }
 
 static void chat(Args &args) {
@@ -160,7 +164,10 @@ static void chat(Args &args) {
     int64_t end_load_us = ggml_time_us();
 
     std::string model_name = pipeline.model->config.model_type_name();
-
+    if(model_name != "ChatGLM3") {
+        std::cerr << "Sorry, This project for ChatGLM3 only. ¯\\_(ツ)_/¯" << std::flush;
+        exit(EXIT_FAILURE);
+    }
     auto text_streamer = std::make_shared<chatglm::TextStreamer>(std::cout, pipeline.tokenizer.get());
     auto perf_streamer = std::make_shared<chatglm::PerfStreamer>();
     auto streamer = std::make_shared<chatglm::StreamerGroup>(
@@ -169,7 +176,7 @@ static void chat(Args &args) {
     chatglm::GenerationConfig gen_config(args.max_length, args.max_context_length, args.temp > 0, args.top_k,
                                          args.top_p, args.temp, args.repeat_penalty, args.num_threads);
 
-    if (args.verbose) {
+    if (args.verbose) { // FIXME: 找个函数把底下这玩意封装一下
         std::cout << "system info: | "
                   << "AVX = " << ggml_cpu_has_avx() << " | "
                   << "AVX2 = " << ggml_cpu_has_avx2() << " | "
@@ -205,8 +212,7 @@ static void chat(Args &args) {
         args.interactive = false;
     }
 
-    if (args.interactive)
- {
+    if (args.interactive) {
         std::cout << R"(=========================================)" << '\n'
                   << R"(                             _           )" << '\n'
                   << R"(   __,  -/- ,_   .     __   //  ,____,   )" << '\n'
@@ -214,41 +220,40 @@ static void chat(Args &args) {
                   << R"(                      _/_                )" << '\n'
                   << R"(                     (/                  )" << '\n'
                   << R"(=========================================)" << '\n'
-                  << '\n';
+                  << '\n'
+                  << "Powered by ChatGLM.cpp! Press <Ctrl-c> to exit." << '\n'
+                  << std::endl;
 
-        std::cout
-            << "Powered by ChatGLM.cpp! Press <Ctrl-c> to exit.\n"
-            << "\n";
-
-        std::vector<std::string> history;
+        std::vector<std::string> history; // FIXME: history仅用于储存对话到log, log归rag管理. 所以想一个更好的数据结构管理这个
+        std::vector<std::string> work_memory;
         // read from file: sys_prompt_fpath
         if (!args.sys_prompt_fpath.empty()) {
-            history = set_history(args.sys_prompt_fpath);
+            work_memory = init_work_memery(args.sys_prompt_fpath);
         }
         while (1) {
             std::cout << std::setw(model_name.size()) << std::left
-                      << " > " << std::flush;
+                      << " >>> " << std::flush;
             std::string prompt;
+            adjust_work_memery(prompt, work_memory);
+
             if (!get_utf8_line(prompt)) {
-                break;
+                break; // FIXME: this function get prompt, it should check avaliable too.
             }
             if (prompt.empty()) {
                 continue;
             }
-            // if (prompt == "clear") {
-            //     history.clear();
-            //     continue;
-            // }
-            history.emplace_back(std::move("[u]"+prompt));
-            std::cout << model_name << " > ";
-            std::string output = pipeline.chat(history, gen_config, streamer.get());
-            history.emplace_back(std::move("[a]"+output));
+
+            work_memory.emplace_back(std::move("[usr]"+prompt));
+            std::cout << "Atri" << " > ";
+            std::string output = pipeline.chat(work_memory, gen_config, streamer.get());
+            work_memory.emplace_back(std::move("[atri]"+output));
+
             if (args.verbose) {
                 std::cout << "\n" << perf_streamer->to_string() << "\n\n";
             }
             perf_streamer->reset();
         }
-        std::cout << "Bye\n";
+        std::cout << "\nBye\n";
     } else {
         if (args.mode == INFERENCE_MODE_CHAT) {
             pipeline.chat({args.prompt}, gen_config, streamer.get());

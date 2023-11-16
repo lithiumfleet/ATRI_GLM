@@ -422,10 +422,9 @@ std::string to_string(ModelType model_type) {
     case MODEL_TYPE_CHATGLM:
         return "ChatGLM";
     case MODEL_TYPE_CHATGLM2:
-        // return "ChatGLM2";
+        return "ChatGLM2";
     case MODEL_TYPE_CHATGLM3:
-        // return "ChatGLM3";
-        return "Atri";  // set model name to arti
+        return "ChatGLM3";
     case MODEL_TYPE_BAICHUAN7B:
         return "Baichuan7B";
     case MODEL_TYPE_BAICHUAN13B:
@@ -918,11 +917,11 @@ std::vector<int> ChatGLM2Tokenizer::encode_history(const std::vector<std::string
 }
 
 std::string ChatGLM2Tokenizer::build_prompt(const std::vector<std::string> &history) {
-    // 这里事GLM2的history入口
+    // 这里是GLM2的history入口
     // CHATGLM_CHECK((history.size()) % 2 == 0) << "invalid history size " << history.size();
 
     std::ostringstream oss_prompt;
-    // check use system prompt or not
+
     size_t i = (history.size() % 2 == 0) ? 0 : 1;
     for (i ; i < history.size(); i += 2) {
         oss_prompt << "[Round " << i / 2 + 1 << "]\n\n问：" << history[i] << "\n\n答：";
