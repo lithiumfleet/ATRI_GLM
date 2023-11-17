@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <ctime>
 
 #ifdef _WIN32
 #include <codecvt>
@@ -35,6 +36,7 @@ struct Args {
     int num_threads = 0;
     bool verbose = false;
     std::string sys_prompt_fpath = "";
+    std::string history_saving_dir = "";
 };
 
 static void usage(const std::string &prog) {
@@ -55,7 +57,8 @@ static void usage(const std::string &prog) {
               << "  --repeat_penalty N      penalize repeat sequence of tokens (default: 1.0, 1.0 = disabled)\n"
               << "  -t, --threads N         number of threads for inference\n"
               << "  -v, --verbose           display verbose output including config/system/performance info\n"
-              << "  -s, --sys_prompt_fpath  set system prompt from a file\n";
+              << "  -s, --sys_prompt_fpath  set system prompt from a file\n"
+              << "  -d, --history_save_dir  dialog will be saved in directory\n";
 }
 
 static Args parse_args(const std::vector<std::string> &argv) {
@@ -93,6 +96,8 @@ static Args parse_args(const std::vector<std::string> &argv) {
             args.verbose = true;
         } else if (arg == "-s" || arg == "--sys_prompt_fpath") {
             args.sys_prompt_fpath = argv[++i];
+        } else if (arg == "-d" || arg == "--history_saving_dir") {
+            args.history_saving_dir = argv[++i];
         } else {
             std::cerr << "Unknown argument: " << arg << std::endl;
             usage(argv[0]);
@@ -157,6 +162,28 @@ static std::vector<std::string> adjust_work_memery(const std::string& prompt, st
     return work_memery; //FIXME!
 }
 
+void save_history(const std::vector<std::string>& history, std::string logdir) {
+    if(logdir == "") {
+        std::cerr << "History unsave. Please check your history_save_dir" << std::endl;
+        return;
+    }
+
+    // get time
+    std::time_t currentTime = std::time(nullptr);
+    std::string dateTimeString = std::ctime(&currentTime);
+    std::string fpath = logdir+'/';
+    for(char c : dateTimeString) if(std::isdigit(c))fpath += c;
+    fpath += ".txt";
+
+    std::ofstream log_file(fpath);
+    for(size_t i=0; i<history.size(); i++) {
+        std::string line = history[i];
+        // FIXME: remove all \n
+        log_file << line << std::endl;
+    }
+    log_file.close();
+}
+
 static void chat(Args &args) {
     ggml_time_init();
     int64_t start_load_us = ggml_time_us();
@@ -176,7 +203,7 @@ static void chat(Args &args) {
     chatglm::GenerationConfig gen_config(args.max_length, args.max_context_length, args.temp > 0, args.top_k,
                                          args.top_p, args.temp, args.repeat_penalty, args.num_threads);
 
-    if (args.verbose) { // FIXME: 找个函数把底下这玩意封装一下
+    if (args.verbose) {
         std::cout << "system info: | "
                   << "AVX = " << ggml_cpu_has_avx() << " | "
                   << "AVX2 = " << ggml_cpu_has_avx2() << " | "
@@ -224,36 +251,39 @@ static void chat(Args &args) {
                   << "Powered by ChatGLM.cpp! Press <Ctrl-c> to exit." << '\n'
                   << std::endl;
 
-        std::vector<std::string> history; // FIXME: history仅用于储存对话到log, log归rag管理. 所以想一个更好的数据结构管理这个
+        std::vector<std::string> history;
         std::vector<std::string> work_memory;
-        // read from file: sys_prompt_fpath
-        if (!args.sys_prompt_fpath.empty()) {
-            work_memory = init_work_memery(args.sys_prompt_fpath);
-        }
+
+        if (!args.sys_prompt_fpath.empty()) work_memory = init_work_memery(args.sys_prompt_fpath);
+        
         while (1) {
             std::cout << std::setw(model_name.size()) << std::left
                       << " >>> " << std::flush;
             std::string prompt;
+
+            // get prompt
+            if (!get_utf8_line(prompt)) break;
+            if (prompt.empty()) continue;
+            if (prompt == "exit") break;
+
             adjust_work_memery(prompt, work_memory);
 
-            if (!get_utf8_line(prompt)) {
-                break; // FIXME: this function get prompt, it should check avaliable too.
-            }
-            if (prompt.empty()) {
-                continue;
-            }
-
             work_memory.emplace_back(std::move("[usr]"+prompt));
+            history.emplace_back(std::move("[usr]"+prompt));
             std::cout << "Atri" << " > ";
             std::string output = pipeline.chat(work_memory, gen_config, streamer.get());
             work_memory.emplace_back(std::move("[atri]"+output));
+            history.emplace_back(std::move("[atri]"+output));
 
             if (args.verbose) {
                 std::cout << "\n" << perf_streamer->to_string() << "\n\n";
             }
             perf_streamer->reset();
+            
         }
-        std::cout << "\nBye\n";
+        save_history(history,args.history_saving_dir);
+        std::cout << "Bye\n";
+
     } else {
         if (args.mode == INFERENCE_MODE_CHAT) {
             pipeline.chat({args.prompt}, gen_config, streamer.get());

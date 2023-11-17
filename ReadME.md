@@ -11,8 +11,8 @@
 + [x] 整理微调经验贴
 + [x] ~~分离chat接口~~ 都放main里,不分离了
 + [ ] 获取数据集
++ [ ] rwkv增强数据
 + [ ] 微调
-+ [ ] 加入rwkv及rag部分
 
 ## acknowledgements
 
