@@ -1,11 +1,14 @@
 from requests import post
 from typing import Optional
+import json
 
 class Pipe:
   def __init__(self) -> None:
     # 我使用的cpolar的域名会变动, 在这里修改
     # 可以在这里换成自己模型api
-    self.url= "http://40d42f12.r1.cpolar.top"+"/v1/chat/completions"
+    with open('./service_config.json') as f:
+      cfg = json.load(f)
+    self.url = cfg["atri_url"]+"/v1/chat/completions"
     self.default_args = {
     "do_sample": "true",
     "temperature": 0.95,

@@ -5,8 +5,10 @@ from hashlib import md5
 
 def trans(query:str):
     # Set your own appid/appkey.
-    appid = "20240106001933058" 
-    appkey = "OTbadpRuk_JdzYQ97MEa"
+    with open('./service_config.json') as f:
+        cfg = json.load(f)
+    appid = cfg["appid"]
+    appkey = cfg["appkey"]
 
     # For list of language codes, please refer to `https://api.fanyi.baidu.com/doc/21`
     from_lang = 'zh'
@@ -34,3 +36,5 @@ def trans(query:str):
     trans_list = result["trans_result"]
     res = '\n'.join(trans_list[i]["dst"] for i in range(len(trans_list)))
     return res
+
+print(trans("今日は私の誕生日"))

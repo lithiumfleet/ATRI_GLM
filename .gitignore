@@ -3,3 +3,4 @@ cpp_accelerate/
 env_atri/
 knowledge.txt
 __pycache__/
+service_config.json

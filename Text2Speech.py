@@ -9,7 +9,9 @@ from Translate import trans
 
 class TTS:
     def __init__(self) -> None:
-        self.url = 'http://localhost:8000/jp_tts/'
+        with open("./service_config.json") as f:
+            cfg = json.load(f)
+        self.url = cfg["tts_url"]
 
     def zh_to_jp_wav(self,inputs:Optional[str|list[str]],need_trans2jp=True):
         # 从api接口拿
