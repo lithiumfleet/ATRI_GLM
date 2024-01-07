@@ -1,28 +1,29 @@
 from requests import post
+from typing import Optional
 
 class Pipe:
   def __init__(self) -> None:
     # 我使用的cpolar的域名会变动, 在这里修改
     # 可以在这里换成自己模型api
-    self.url= "localhost:7999/v1/chat/completions"
+    self.url= "http://40d42f12.r1.cpolar.top"+"/v1/chat/completions"
     self.default_args = {
     "do_sample": "true",
-    "temperature": 0.8,
-    "top_p": 0.5,
+    "temperature": 0.95,
+    "top_p": 0.7,
     "n": 1,
     "max_tokens": 0,
     "stream": "false"
     }
   
-  def get_messages(self, query:str, history:list[str], knowledge:list[str], system:str) -> list[dict[str:str]]:
+  def get_messages(self, query:str, history:list[str], knowledge:list[str], system:Optional[str|None]=None) -> list[dict[str:str]]:
     messages = []
     # 设置system prompt
-    if system == '':
-      system = "你是ATRI,你需要用可爱活泼的语气回复."
+    # if not system == None:
+    #   system = "你是ATRI.请和我对话."
 
-    # 这里直接将knowledge拼接在system后面
-    str_knowledge = '以下是一些信息:'+';'.join(knowledge)
-    messages.append({"role":"system", "content":system+str_knowledge})
+    # 这里直接将knowledge拼接在query后面
+    if len(knowledge) != 0:
+      query += "\n(extra info:{})".format(';'.join(knowledge)) 
 
     # 交替设置role
     for i,text in enumerate(history):
@@ -34,7 +35,7 @@ class Pipe:
     return messages
 
 
-  def chat(self,query:str='' ,history:list[str]=[], knowledge:list[str]=[], system:str='', **args) -> list[str]:
+  def chat(self,query:str='' ,history:list[str]=[], knowledge:list[str]=[], system:Optional[str|None]=None, **args) -> list[str]:
     # 合成messages
     messages = self.get_messages(query,history,knowledge,system)
 

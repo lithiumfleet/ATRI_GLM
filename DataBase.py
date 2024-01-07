@@ -3,8 +3,8 @@ from chromadb.utils import embedding_functions
 
 class DataBase:
     def __init__(self) -> None:
-        # self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction("D:/models/m3e-base")
-        self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
+        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction("D:/models/m3e-base")
+        # self.embedding_fn = embedding_functions.DefaultEmbeddingFunction()
         self.chromadb_client = chromadb.PersistentClient(path='./chroma')
         self.collection:chromadb.Collection=None
         # 限制搜索结果
