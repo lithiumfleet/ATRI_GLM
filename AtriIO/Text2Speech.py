@@ -1,10 +1,9 @@
 from typing import Optional
-from sounddevice import play
 from requests import get
 import numpy as np
 import json
 from warnings import warn
-from Translate import trans
+from AtriIO.Translate import trans
 
 
 class TTS:
@@ -29,6 +28,3 @@ class TTS:
     def tran2jp(inputs:str):
         return trans(inputs)
     
-    @staticmethod
-    def play(audio:np.ndarray):
-        play(audio, samplerate=22050)

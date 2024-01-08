@@ -1,12 +1,13 @@
 from Pipeline import Pipe
 from Memory import Memo
-from Text2Speech import TTS
+from AtriIO.VoiceIO import VoiceIO
 from time import sleep
 
 memo = Memo()
 memo.init_kownledge_from_txt("knowledge.txt")
 pipe = Pipe()
-tts = TTS()
+vocio = VoiceIO()
+
 
 def main():
     while True:
@@ -23,6 +24,13 @@ def main():
         if query == 'add':
             memo.add_history_to_db(*previous)
             continue
+        if query == 'rec':
+            # FIXME
+            continue
+            # print("waiting for your voc...")
+            # duration = int(input("sec to rec: "))
+            # query = vocio.voc_to_str(duration)
+            # print(query)
         if query == '':
             continue
 
@@ -34,8 +42,8 @@ def main():
         atri_response:list[str] = pipe.chat(query=query, history=history, knowledge=knowledge)
 
         # tts
-        wavout = tts.zh_to_jp_wav(atri_response)
-        tts.play(wavout)
+        wavout = vocio.str_to_voc(atri_response)
+        vocio.play(wavout)
 
         # 更新历史记录
         memo.update_history(query, atri_response)

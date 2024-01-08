@@ -2,11 +2,13 @@ import requests
 import random
 import json
 from hashlib import md5
+import os
+
+# Set your own appid/appkey.
+with open(os.getcwd()+os.sep+'AtriIO\\baidutrans_config.json') as f:
+    cfg = json.load(f)
 
 def trans(query:str):
-    # Set your own appid/appkey.
-    with open('./service_config.json') as f:
-        cfg = json.load(f)
     appid = cfg["appid"]
     appkey = cfg["appkey"]
 
@@ -36,5 +38,3 @@ def trans(query:str):
     trans_list = result["trans_result"]
     res = '\n'.join(trans_list[i]["dst"] for i in range(len(trans_list)))
     return res
-
-print(trans("今日は私の誕生日"))
