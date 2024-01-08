@@ -15,17 +15,15 @@ class WSP:
         # segment is a namedtuple
         texts = [seg.text for seg in segments]
         return '.'.join(texts)
-    
-    def record(self,duration:Optional[int|float]=20) -> ndarray:
-        # FIXME
+
+    @staticmethod
+    def record(duration:int|float=10) -> ndarray:
         fs = 44100
-        recording = None
-
-        recording = sd.rec(int(duration * fs), samplerate=fs, channels=2)
+        audio = sd.rec(int(duration*fs), samplerate=fs, channels=1)
         sd.wait()
-        recording = np.asarray(recording).astype('float32')
-
-        return recording
+        audio = np.squeeze(audio)
+        audio = audio.astype(np.float32)/32768.0
+        return audio
 
 if __name__ == '__main__':
     w = WSP()

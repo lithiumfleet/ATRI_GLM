@@ -10,9 +10,11 @@ vocio = VoiceIO()
 
 
 def main():
+    rec_flag = False
     while True:
         # 输入
-        query = input(">>>>> ")
+        if not rec_flag:
+            query = input(">>>>> ")
         if query == 'exit':
             break
         if query == 'clear':
@@ -24,13 +26,17 @@ def main():
         if query == 'add':
             memo.add_history_to_db(*previous)
             continue
-        if query == 'rec':
-            # FIXME
-            continue
-            # print("waiting for your voc...")
-            # duration = int(input("sec to rec: "))
-            # query = vocio.voc_to_str(duration)
-            # print(query)
+        if query == 'rec' or rec_flag:
+            rec_flag = True
+            print("waiting for your voc...", end="")
+            duration = input("secs to rec: ")
+            if duration == "exit":
+                rec_flag = False
+                continue
+            else:
+                duration = int(duration)
+            query = vocio.voc_to_str(duration)
+            print(">>>>> " + query)
         if query == '':
             continue
 
@@ -42,8 +48,8 @@ def main():
         atri_response:list[str] = pipe.chat(query=query, history=history, knowledge=knowledge)
 
         # tts
-        wavout = vocio.str_to_voc(atri_response)
-        vocio.play(wavout)
+        # wavout = vocio.str_to_voc(atri_response)
+        # vocio.play(wavout)
 
         # 更新历史记录
         memo.update_history(query, atri_response)
