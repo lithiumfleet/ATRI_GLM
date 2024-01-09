@@ -21,7 +21,10 @@ def main():
         if keyboard.read_key() == "ctrl":
             if rec_flag:
                 query = vocio.ctrl_then_rec()
-                print(">>>>> " + query, end="")
+                print(">>>>> " + query)
+                check = input("(press enter to send...)")
+                if check.strip() != "":
+                    continue
             else:
                 continue
         else:

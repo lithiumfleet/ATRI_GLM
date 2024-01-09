@@ -1,0 +1,22 @@
+mkdir atri_lora
+accelerate launch src/train_bash.py \
+    --stage sft \
+    --do_train \
+    --model_name_or_path /models/baichuan2-7b-chat \
+    --dataset atri_with_history_2_9k,oaast_sft_zh \
+    --template baichuan2 \
+    --finetuning_type lora \
+    --lora_target W_pack \
+    --output_dir atri_lora \
+    --overwrite_cache \
+    --per_device_train_batch_size 5 \
+    --gradient_accumulation_steps 12 \
+    --lr_scheduler_type cosine \
+    --logging_steps 2 \
+    --save_steps 60 \
+    --lora_rank 16 \
+    --lora_alpha 32 \
+    --learning_rate 3e-5 \
+    --num_train_epochs 2.0 \
+    --plot_loss \
+    --fp16
