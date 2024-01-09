@@ -27,7 +27,8 @@
 > 这个玩具项目没打算给人用......看看就好.
 1. server_scripts: app.py和TTS_server.py分别放到llamafactory和moetts中以启动服务(见脚本注释).
 2. 微调: ATRI语气数据集: 2.9k生成数据集(from qwen14b)和oaast_sft. 微调配置在start.sh里
-3. 启动atri.py
+3. 自行配置AtriIO\baidutrans_config.json和service_config.json
+4. 启动atri.py
 
 ## acknowledgements
 
