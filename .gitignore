@@ -1,7 +1,8 @@
 chroma/
+.vscode/
 cpp_accelerate/
 env_atri/
 knowledge.txt
 __pycache__/
 service_config.json
-AtriIO/baidutrans_config.json
+*_config.json

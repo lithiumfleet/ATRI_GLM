@@ -33,7 +33,7 @@ class Memo:
     def search_knownledge(self,query:list[str]) -> list[str]:
         # 防止前面的对话盖掉query的语义, 设置最近2个句子能搜到和query更相关的knowledge
         query_texts = ''.join(self.all_history[-2:]) + query
-        return self.knowledgedb.search_knownledge(query_texts=query_texts,n_results=4)
+        return self.knowledgedb.search_knownledge(query_texts=query_texts,n_results=2)
 
     def clear_historydb(self):
         # FIXME: 我觉得得加点logger

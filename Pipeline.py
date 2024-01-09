@@ -1,6 +1,7 @@
 from requests import post
 from typing import Optional
 import json
+from random import choice
 
 class Pipe:
   def __init__(self) -> None:
@@ -26,7 +27,7 @@ class Pipe:
 
     # 这里直接将knowledge拼接在query后面
     if len(knowledge) != 0:
-      query += "\n(extra info:{})".format(';'.join(knowledge)) 
+      query += "\n(extra info:{})".format(choice(knowledge)) 
 
     # 交替设置role
     for i,text in enumerate(history):

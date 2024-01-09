@@ -1,12 +1,17 @@
 from AtriIO.Text2Speech import TTS
 from AtriIO.Speech2Text import WSP
-from numpy import ndarray
 from sounddevice import play
+from numpy import ndarray
+
 
 class VoiceIO:
     def __init__(self) -> None:
         self.tts = TTS()
         self.wsp = WSP()
+    
+    def ctrl_then_rec(self) -> str:
+        # assuming ctrl is pressed
+        return self.wsp.ctrl_rec()
 
     def voc_to_str(self, duration=10) -> str:
         recording = self.wsp.record(duration)
